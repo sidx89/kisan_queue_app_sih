@@ -17,7 +17,7 @@ export async function getCentres(req: Request, res: Response, next: NextFunction
        ORDER BY c.id ASC`
     );
 
-    return res.json({ success: true, centres, requestId: req.requestId });
+    return res.json({ success: true, centres, data: centres, requestId: req.requestId });
   } catch (err) {
     next(err);
   }
@@ -183,7 +183,7 @@ export async function assignOperatorToCounter(req: Request, res: Response, next:
 export async function getCrops(req: Request, res: Response, next: NextFunction) {
   try {
     const [crops]: any = await pool.execute(`SELECT * FROM crops ORDER BY name ASC`);
-    return res.json({ success: true, crops, requestId: req.requestId });
+    return res.json({ success: true, crops, data: crops, requestId: req.requestId });
   } catch (err) {
     next(err);
   }

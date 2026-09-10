@@ -59,6 +59,12 @@ export async function getLiveQueue(req: Request, res: Response, next: NextFuncti
       };
     });
 
+    const [centreRows]: any = await pool.execute(
+      `SELECT name FROM procurement_centres WHERE id = ? LIMIT 1`,
+      [centreId]
+    );
+    const centreName = centreRows[0]?.name || `Centre #${centreId}`;
+
     const [counters]: any = await pool.execute(
       `SELECT ct.*, p.full_name as operator_name
        FROM counters ct
@@ -68,7 +74,24 @@ export async function getLiveQueue(req: Request, res: Response, next: NextFuncti
       [centreId]
     );
 
-    return res.json({ success: true, centreId, date, queue, counters, requestId: req.requestId });
+    const liveQueueData = {
+      centreId,
+      centreName,
+      queue_entries: queue,
+      your_position: null,
+      estimated_wait_minutes: queue.length > 0 ? (queue[0].estimated_wait_minutes || 15) : 0,
+    };
+
+    return res.json({
+      success: true,
+      centreId,
+      centreName,
+      date,
+      queue,
+      counters,
+      data: liveQueueData,
+      requestId: req.requestId,
+    });
   } catch (err) {
     next(err);
   }

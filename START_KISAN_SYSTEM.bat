@@ -1,3 +1,3 @@
-@echo off
-title KisanProcure - Launcher
-call "%~dp0scripts\start-all.bat"
+@echo off
+title KisanProcure System Launcher
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\launch.ps1"

@@ -1,0 +1,11 @@
+KISANPROCURE CONNECTION REPORT
+================================
+Generated : 2026-09-10 21:43:43
+MySQL     : PASS (Port 3306)
+Backend   : PASS (Port 5000)
+Admin     : PASS (Port 3000)
+Socket.IO : PASS (Handshake OK, Engine Running)
+Tunnel    : RUNNING
+Public URL: https://navigation-optics-composite-oriented.trycloudflare.com
+PublicH   : PASS (HTTP 200 OK)
+Local URL : http://127.0.0.1:5000

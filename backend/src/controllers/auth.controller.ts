@@ -79,11 +79,11 @@ export async function login(req: Request, res: Response, next: NextFunction) {
       metadata: { role: user.role, email: user.email },
     });
 
-    return res.json({
-      success: true,
+    const authData = {
       token,
       user: {
         id: user.id,
+        name: user.full_name || user.email,
         email: user.email,
         role: user.role,
         fullName: user.full_name || 'System User',
@@ -92,6 +92,13 @@ export async function login(req: Request, res: Response, next: NextFunction) {
         village: user.village || '',
         district: user.district || '',
       },
+    };
+
+    return res.json({
+      success: true,
+      token,
+      user: authData.user,
+      data: authData,
       requestId: req.requestId,
     });
   } catch (err) {

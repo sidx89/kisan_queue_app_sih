@@ -19,6 +19,7 @@ import com.kisanprocure.app.utils.AppConfig
 fun ProfileScreen(
     authViewModel: AuthViewModel,
     onBack: () -> Unit,
+    onNavigateToDiagnostics: () -> Unit = {},
     onLogout: () -> Unit
 ) {
     val context = LocalContext.current
@@ -98,6 +99,13 @@ fun ProfileScreen(
                 label = { Text("API Base URL") },
                 modifier = Modifier.fillMaxWidth()
             )
+
+            OutlinedButton(
+                onClick = onNavigateToDiagnostics,
+                modifier = Modifier.fillMaxWidth().height(48.dp)
+            ) {
+                Text("📡 Connection Diagnostics")
+            }
 
             Spacer(modifier = Modifier.weight(1f))
 

@@ -16,26 +16,37 @@ object AppConfig {
     private const val KEY_API_URL = "api_base_url"
     private const val KEY_ENV = "environment"
 
-    enum class Environment { CLOUDFLARE, USB_LOCAL, CUSTOM }
+    enum class Environment {
+        TUNNEL,
+        LOCAL_USB,
+        LOCAL_NETWORK,
+        CUSTOM
+    }
 
-    // Live Public Cloudflare Tunnel URL (worldwide accessibility)
-    const val LIVE_CLOUDFLARE_URL = "https://soldiers-blog-limit-intention.trycloudflare.com"
-    const val USB_LOCAL_URL = "http://localhost:5000"
+    // Live Public Cloudflare Tunnel URL
+    const val LIVE_CLOUDFLARE_URL = "https://navigation-optics-composite-oriented.trycloudflare.com"
+    const val USB_LOCAL_URL = "http://127.0.0.1:5000"
 
     private lateinit var prefs: SharedPreferences
 
     var apiBaseUrl: String = LIVE_CLOUDFLARE_URL
         private set
 
-    var environment: Environment = Environment.CLOUDFLARE
+    var environment: Environment = Environment.TUNNEL
         private set
 
     fun init(context: Context) {
         prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val saved = prefs.getString(KEY_API_URL, null)
 
-        // If never set or previously pointed to invalid 192.168.1.100, upgrade to Cloudflare URL
-        apiBaseUrl = if (saved.isNullOrBlank() || saved.contains("192.168.1.100") || saved.contains("your-tunnel")) {
+        // Upgrade any stale or expired quick tunnel URLs
+        apiBaseUrl = if (saved.isNullOrBlank() ||
+            saved.contains("192.168.1.100") ||
+            saved.contains("your-tunnel") ||
+            saved.contains("soldiers-blog-limit-intention") ||
+            saved.contains("bigger-layer-show-seats") ||
+            saved.contains("allowing-month-msie-workplace")
+        ) {
             prefs.edit().putString(KEY_API_URL, LIVE_CLOUDFLARE_URL).apply()
             LIVE_CLOUDFLARE_URL
         } else {
@@ -43,9 +54,9 @@ object AppConfig {
         }
 
         environment = try {
-            Environment.valueOf(prefs.getString(KEY_ENV, Environment.CLOUDFLARE.name) ?: "CLOUDFLARE")
+            Environment.valueOf(prefs.getString(KEY_ENV, Environment.TUNNEL.name) ?: "TUNNEL")
         } catch (e: IllegalArgumentException) {
-            Environment.CLOUDFLARE
+            Environment.TUNNEL
         }
 
         Log.i(TAG, "Config loaded: env=$environment url=$apiBaseUrl")
@@ -54,8 +65,9 @@ object AppConfig {
     fun setEnvironment(context: Context, env: Environment) {
         environment = env
         apiBaseUrl = when (env) {
-            Environment.CLOUDFLARE -> LIVE_CLOUDFLARE_URL
-            Environment.USB_LOCAL -> USB_LOCAL_URL
+            Environment.TUNNEL -> LIVE_CLOUDFLARE_URL
+            Environment.LOCAL_USB -> USB_LOCAL_URL
+            Environment.LOCAL_NETWORK -> "http://192.168.1.100:5000"
             Environment.CUSTOM -> apiBaseUrl
         }
         prefs.edit()

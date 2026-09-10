@@ -95,11 +95,18 @@ fun KisanNavGraph(
             ProfileScreen(
                 authViewModel = authViewModel,
                 onBack = { navController.popBackStack() },
+                onNavigateToDiagnostics = { navController.navigate("diagnostics") },
                 onLogout = {
                     navController.navigate("login") {
                         popUpTo(0) { inclusive = true }
                     }
                 }
+            )
+        }
+
+        composable("diagnostics") {
+            ConnectionDiagnosticsScreen(
+                onBack = { navController.popBackStack() }
             )
         }
 

@@ -21,7 +21,7 @@ const DEFAULT_TIME_SLOTS = [
 
 export async function getSlots(req: Request, res: Response, next: NextFunction) {
   try {
-    const centreId = parseInt(req.query.centreId as string, 10);
+    const centreId = parseInt((req.query.centreId || req.params.id || req.params.centreId) as string, 10);
     const date = (req.query.date as string) || new Date().toISOString().split('T')[0];
 
     if (!centreId) {
@@ -51,7 +51,7 @@ export async function getSlots(req: Request, res: Response, next: NextFunction) 
       slots = fresh;
     }
 
-    return res.json({ success: true, centreId, date, slots, requestId: req.requestId });
+    return res.json({ success: true, centreId, date, slots, data: slots, requestId: req.requestId });
   } catch (err) {
     next(err);
   }

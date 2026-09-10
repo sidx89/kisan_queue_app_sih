@@ -24,6 +24,10 @@ router.get('/health/database', HealthCtrl.getDbHealth);
 router.get('/health/socket', HealthCtrl.getSocketHealth);
 router.get('/health/notifications', HealthCtrl.getNotificationHealth);
 
+// Public System Config — Android app reads this via USB to get current tunnel URL
+router.get('/api/system/public-config', SystemCtrl.getPublicConfig);
+router.get('/api/system/connection-test', SystemCtrl.getConnectionTest);
+
 // Client Error Reporting Endpoint (Requirement 5, 6, 22, 23)
 router.post('/api/errors/report', ErrorsCtrl.reportClientError);
 
@@ -37,10 +41,12 @@ router.post('/api/auth/fcm-token', authenticate, AuthCtrl.updateFcm);
 router.get('/api/centres', CentresCtrl.getCentres);
 router.get('/api/crops', CentresCtrl.getCrops);
 router.get('/api/slots', SlotsCtrl.getSlots);
+router.get('/api/centres/:id/slots', SlotsCtrl.getSlots);
 router.get('/api/queue/:centreId', QueueCtrl.getLiveQueue);
 
 // Farmer Specific Endpoints
 router.post('/api/bookings', authenticate, BookingsCtrl.createBooking);
+router.get('/api/bookings', authenticate, BookingsCtrl.getFarmerBookings);
 router.get('/api/bookings/my', authenticate, BookingsCtrl.getFarmerBookings);
 router.post('/api/queue/check-in', authenticate, BookingsCtrl.qrCheckIn);
 

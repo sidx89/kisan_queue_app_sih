@@ -8,12 +8,13 @@ export async function createBooking(req: Request, res: Response, next: NextFunct
   const conn = await pool.getConnection();
   try {
     const farmerId = req.user?.id;
-    const { centreId, slotId, cropId, expectedQuantity, bookingDate } = req.body;
+    const { centreId, slotId, cropId, expectedQuantity, estimated_quantity_kg, estimatedQuantityKg, notes, bookingDate } = req.body;
+    const qty = expectedQuantity || estimated_quantity_kg || estimatedQuantityKg;
 
-    if (!centreId || !slotId || !cropId || !expectedQuantity) {
+    if (!centreId || !slotId || !cropId || !qty) {
       return res.status(400).json({
         success: false,
-        message: 'centreId, slotId, cropId, and expectedQuantity are required',
+        message: 'centreId, slotId, cropId, and quantity are required',
       });
     }
 
@@ -35,21 +36,25 @@ export async function createBooking(req: Request, res: Response, next: NextFunct
       return res.status(400).json({ success: false, message: 'Selected slot is completely full. Please choose another.' });
     }
 
+    const slotDateStr = slot.slot_date instanceof Date
+      ? slot.slot_date.toISOString().split('T')[0]
+      : String(slot.slot_date).split('T')[0];
+
     // 2. Generate next sequential token for this centre & date
     const [tokenRows]: any = await conn.execute(
       `SELECT COALESCE(MAX(token_number), 100) + 1 AS next_token
        FROM bookings WHERE centre_id = ? AND booking_date = ? FOR UPDATE`,
-      [centreId, slot.slot_date]
+      [centreId, slotDateStr]
     );
     const tokenNumber = tokenRows[0].next_token;
-    const bookingRef = `BK-${slot.slot_date.replace(/-/g, '')}-${tokenNumber}`;
+    const bookingRef = `BK-${slotDateStr.replace(/-/g, '')}-${tokenNumber}`;
 
     // 3. Insert booking
     const [insertRes]: any = await conn.execute(
       `INSERT INTO bookings
        (booking_ref, token_number, farmer_id, centre_id, slot_id, crop_id, expected_quantity, booking_date, status, queue_position, estimated_wait_minutes)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'WAITING', ?, ?)`,
-      [bookingRef, tokenNumber, farmerId, centreId, slotId, cropId, expectedQuantity, slot.slot_date, 1, 15]
+      [bookingRef, tokenNumber, farmerId, centreId, slotId, cropId, qty, slotDateStr, 1, 15]
     );
 
     const bookingId = insertRes.insertId;
@@ -71,7 +76,7 @@ export async function createBooking(req: Request, res: Response, next: NextFunct
       action: 'BOOKED_SLOT',
       entity: 'BOOKING',
       entityId: bookingId,
-      metadata: { bookingRef, tokenNumber, centreId, cropId, quantity: expectedQuantity },
+      metadata: { bookingRef, tokenNumber, centreId, cropId, quantity: qty },
       ipAddress: req.ip,
     });
 
@@ -79,7 +84,7 @@ export async function createBooking(req: Request, res: Response, next: NextFunct
     await sendPushNotification({
       userId: farmerId!,
       title: 'Booking Confirmed!',
-      message: `Your slot on ${slot.slot_date} (${slot.start_time}) is confirmed. Token Number: ${tokenNumber}.`,
+      message: `Your slot on ${slotDateStr} (${slot.start_time}) is confirmed. Token Number: ${tokenNumber}.`,
       type: 'BOOKING_CONFIRMED',
       data: { bookingId, tokenNumber, bookingRef },
     });
@@ -96,18 +101,26 @@ export async function createBooking(req: Request, res: Response, next: NextFunct
 
     emitToAdmin('stats:refresh', { trigger: 'new_booking' });
 
+    const bookingObj = {
+      id: bookingId,
+      bookingRef,
+      bookingToken: bookingRef,
+      booking_token: bookingRef,
+      tokenNumber: String(tokenNumber),
+      token_number: String(tokenNumber),
+      bookingDate: slotDateStr,
+      slot_date: slotDateStr,
+      slotTime: `${slot.start_time} - ${slot.end_time}`,
+      slot_time: `${slot.start_time} - ${slot.end_time}`,
+      status: 'WAITING',
+      queuePosition: 1,
+      estimatedWaitMinutes: 15,
+    };
+
     return res.status(201).json({
       success: true,
-      booking: {
-        id: bookingId,
-        bookingRef,
-        tokenNumber,
-        bookingDate: slot.slot_date,
-        slotTime: `${slot.start_time} - ${slot.end_time}`,
-        status: 'WAITING',
-        queuePosition: 1,
-        estimatedWaitMinutes: 15,
-      },
+      booking: bookingObj,
+      data: bookingObj,
       requestId: req.requestId,
     });
   } catch (err) {
@@ -135,7 +148,13 @@ export async function getFarmerBookings(req: Request, res: Response, next: NextF
       [farmerId || 0]
     );
 
-    return res.json({ success: true, bookings, requestId: req.requestId });
+    const formatted = bookings.map((b: any) => ({
+      ...b,
+      booking_token: b.booking_ref,
+      bookingToken: b.booking_ref,
+    }));
+
+    return res.json({ success: true, bookings: formatted, data: formatted, requestId: req.requestId });
   } catch (err) {
     next(err);
   }
