@@ -35,11 +35,55 @@ fun HomeScreen(
         bookingViewModel.loadInitialData()
     }
 
+    var selectedLanguage by remember { mutableStateOf("English") }
+    var showLanguageMenu by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("🌾 KisanProcure Home") },
+                title = { Text("🌾 KisanProcure") },
                 actions = {
+                    // Language Selector Button
+                    Box {
+                        TextButton(
+                            onClick = { showLanguageMenu = true },
+                            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary)
+                        ) {
+                            Text(
+                                text = "🗣️ $selectedLanguage",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp
+                            )
+                        }
+
+                        DropdownMenu(
+                            expanded = showLanguageMenu,
+                            onDismissRequest = { showLanguageMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("ಕನ್ನಡ (Kannada)") },
+                                onClick = {
+                                    selectedLanguage = "ಕನ್ನಡ"
+                                    showLanguageMenu = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("हिन्दी (Hindi)") },
+                                onClick = {
+                                    selectedLanguage = "हिन्दी"
+                                    showLanguageMenu = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("English") },
+                                onClick = {
+                                    selectedLanguage = "English"
+                                    showLanguageMenu = false
+                                }
+                            )
+                        }
+                    }
+
                     IconButton(onClick = onNavigateToProfile) {
                         Icon(Icons.Default.AccountCircle, contentDescription = "Profile")
                     }

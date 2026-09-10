@@ -39,6 +39,9 @@ fun LoginScreen(
     var showServerDialog by remember { mutableStateOf(false) }
     var serverUrlInput by remember { mutableStateOf(AppConfig.apiBaseUrl) }
 
+    var selectedLanguage by remember { mutableStateOf("English") }
+    var showLanguageMenu by remember { mutableStateOf(false) }
+
     val uiState by authViewModel.uiState.collectAsState()
 
     LaunchedEffect(uiState) {
@@ -101,33 +104,95 @@ fun LoginScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Server endpoint badge
-                    Surface(
-                        modifier = Modifier.clickable {
-                            serverUrlInput = AppConfig.apiBaseUrl
-                            showServerDialog = true
-                        },
-                        shape = RoundedCornerShape(12.dp),
-                        color = KisanMintContainer,
-                        border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(KisanBorder))
+                    // Configuration Badges: Language Preference & Server Endpoint
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                        // Language Selector Badge (Kannada, Hindi, English)
+                        Box {
+                            Surface(
+                                modifier = Modifier.clickable { showLanguageMenu = true },
+                                shape = RoundedCornerShape(12.dp),
+                                color = KisanMintContainer,
+                                border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(KisanBorder))
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "🗣️ $selectedLanguage",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = KisanGreenDark
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Icon(
+                                        Icons.Default.ArrowDropDown,
+                                        contentDescription = "Select Language",
+                                        tint = KisanGreenPrimary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+
+                            DropdownMenu(
+                                expanded = showLanguageMenu,
+                                onDismissRequest = { showLanguageMenu = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("ಕನ್ನಡ (Kannada)") },
+                                    onClick = {
+                                        selectedLanguage = "ಕನ್ನಡ (Kannada)"
+                                        showLanguageMenu = false
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("हिन्दी (Hindi)") },
+                                    onClick = {
+                                        selectedLanguage = "हिन्दी (Hindi)"
+                                        showLanguageMenu = false
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("English") },
+                                    onClick = {
+                                        selectedLanguage = "English"
+                                        showLanguageMenu = false
+                                    }
+                                )
+                            }
+                        }
+
+                        // Server endpoint badge
+                        Surface(
+                            modifier = Modifier.clickable {
+                                serverUrlInput = AppConfig.apiBaseUrl
+                                showServerDialog = true
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                            color = KisanMintContainer,
+                            border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(KisanBorder))
                         ) {
-                            Text(
-                                text = "🌐 Cloudflare Live",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = KisanGreenDark
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Icon(
-                                Icons.Default.Edit,
-                                contentDescription = "Edit Server URL",
-                                tint = KisanGreenPrimary,
-                                modifier = Modifier.size(14.dp)
-                            )
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "🌐 Cloudflare Live",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = KisanGreenDark
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(
+                                    Icons.Default.Edit,
+                                    contentDescription = "Edit Server URL",
+                                    tint = KisanGreenPrimary,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                            }
                         }
                     }
                 }
