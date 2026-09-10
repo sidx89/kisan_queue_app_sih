@@ -23,7 +23,7 @@ class QueueRepository {
         try {
             val res = ApiClient.apiService.getLiveQueue(centreId)
             if (res.isSuccessful && res.body()?.data != null) {
-                Result.success(res.body()!!.data!)
+                Result.success(res.body()!!.data!!)
             } else {
                 Result.failure(Exception(res.body()?.message ?: "Failed to get queue"))
             }
@@ -36,7 +36,7 @@ class QueueRepository {
         try {
             val res = ApiClient.apiService.checkIn(mapOf("token" to token))
             if (res.isSuccessful && res.body()?.data != null) {
-                Result.success(res.body()!!.data!)
+                Result.success(res.body()!!.data!!)
             } else {
                 Result.failure(Exception(res.body()?.message ?: "Check-in failed"))
             }
@@ -49,7 +49,7 @@ class QueueRepository {
         try {
             val res = ApiClient.apiService.callNext(centreId, mapOf("counterId" to counterId))
             if (res.isSuccessful && res.body()?.data != null) {
-                Result.success(res.body()!!.data!)
+                Result.success(res.body()!!.data!!)
             } else {
                 Result.failure(Exception(res.body()?.message ?: "Call next failed"))
             }
@@ -62,7 +62,7 @@ class QueueRepository {
         try {
             val res = ApiClient.apiService.updateQueueStatus(mapOf("queueId" to queueId, "status" to status))
             if (res.isSuccessful && res.body()?.data != null) {
-                Result.success(res.body()!!.data!)
+                Result.success(res.body()!!.data!!)
             } else {
                 Result.failure(Exception(res.body()?.message ?: "Update status failed"))
             }

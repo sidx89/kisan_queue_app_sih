@@ -37,6 +37,7 @@ android/local.properties
 .vscode/
 *.apk
 *.aab
+*.exe
 
 # OS
 .DS_Store

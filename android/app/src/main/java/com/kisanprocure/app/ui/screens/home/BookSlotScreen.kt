@@ -212,11 +212,14 @@ fun BookSlotScreen(
 
             Button(
                 onClick = {
-                    if (selectedCentreId != null && selectedSlotId != null && selectedCropId != null && quantityKg.isNotBlank()) {
+                    val cId = selectedCentreId
+                    val sId = selectedSlotId
+                    val crId = selectedCropId
+                    if (cId != null && sId != null && crId != null && quantityKg.isNotBlank()) {
                         bookingViewModel.createBooking(
-                            centreId = selectedCentreId!,
-                            slotId = selectedSlotId!,
-                            cropId = selectedCropId!,
+                            centreId = cId,
+                            slotId = sId,
+                            cropId = crId,
                             qty = quantityKg.toDoubleOrNull() ?: 100.0,
                             notes = notes.ifBlank { null }
                         )

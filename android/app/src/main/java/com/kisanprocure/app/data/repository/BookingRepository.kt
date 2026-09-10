@@ -15,7 +15,7 @@ class BookingRepository(private val context: Context) {
         try {
             val res = ApiClient.apiService.getCentres()
             if (res.isSuccessful && res.body()?.data != null) {
-                Result.success(res.body()!!.data!)
+                Result.success(res.body()!!.data!!)
             } else {
                 Result.failure(Exception(res.body()?.message ?: "Failed to load centres"))
             }
@@ -28,7 +28,7 @@ class BookingRepository(private val context: Context) {
         try {
             val res = ApiClient.apiService.getCrops()
             if (res.isSuccessful && res.body()?.data != null) {
-                Result.success(res.body()!!.data!)
+                Result.success(res.body()!!.data!!)
             } else {
                 Result.failure(Exception(res.body()?.message ?: "Failed to load crops"))
             }
@@ -42,7 +42,7 @@ class BookingRepository(private val context: Context) {
             try {
                 val res = ApiClient.apiService.getSlots(centreId, date)
                 if (res.isSuccessful && res.body()?.data != null) {
-                    Result.success(res.body()!!.data!)
+                    Result.success(res.body()!!.data!!)
                 } else {
                     Result.failure(Exception(res.body()?.message ?: "Failed to load slots"))
                 }
@@ -56,7 +56,7 @@ class BookingRepository(private val context: Context) {
             try {
                 val res = ApiClient.apiService.createBooking(request)
                 if (res.isSuccessful && res.body()?.data != null) {
-                    Result.success(res.body()!!.data!)
+                    Result.success(res.body()!!.data!!)
                 } else {
                     Result.failure(Exception(res.body()?.message ?: "Failed to create booking"))
                 }
@@ -69,7 +69,7 @@ class BookingRepository(private val context: Context) {
         try {
             val res = ApiClient.apiService.getMyBookings()
             if (res.isSuccessful && res.body()?.data != null) {
-                val bookings = res.body()!!.data!
+                val bookings = res.body()!!.data!!
                 db.saveBookings(bookings)
                 Result.success(bookings)
             } else {
