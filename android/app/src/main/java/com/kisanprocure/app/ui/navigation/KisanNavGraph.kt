@@ -46,6 +46,7 @@ fun KisanNavGraph(
         composable("home") {
             HomeScreen(
                 bookingViewModel = bookingViewModel,
+                authViewModel = authViewModel,
                 onNavigateToBookSlot = { navController.navigate("book_slot") },
                 onNavigateToLiveQueue = { centreId -> navController.navigate("live_queue/$centreId") },
                 onNavigateToQrPass = { token -> navController.navigate("qr_pass/$token") },

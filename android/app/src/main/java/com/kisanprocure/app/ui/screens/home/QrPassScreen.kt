@@ -1,6 +1,8 @@
 package com.kisanprocure.app.ui.screens.home
 
 import android.graphics.Bitmap
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -9,9 +11,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.QrCode
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
+import com.kisanprocure.app.ui.components.KisanTopBar
 import com.kisanprocure.app.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -33,26 +34,19 @@ fun QrPassScreen(
     token: String,
     onBack: () -> Unit
 ) {
-    val qrBitmap = remember(token) { generateQrBitmap(token, 512) }
+    val qrBitmap = remember(token) { generateQrBitmapGreen(token, 600) }
+
+    // Entry animation
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { visible = true }
 
     Scaffold(
         containerColor = KisanSurfaceLight,
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "Procurement Entry Pass",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = KisanGreenDark
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = KisanGreenDark)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = KisanWhite)
+            KisanTopBar(
+                title = "Procurement Pass",
+                subtitle = "Digital Entry Token",
+                onBack = onBack
             )
         }
     ) { padding ->
@@ -64,123 +58,159 @@ fun QrPassScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(Modifier.height(8.dp))
 
-            // Pass Container Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                elevation = CardDefaults.cardElevation(4.dp),
-                colors = CardDefaults.cardColors(containerColor = KisanWhite)
+            AnimatedVisibility(
+                visible = visible,
+                enter = fadeIn(tween(400)) + slideInVertically(tween(400, easing = EaseOutCubic)) { it / 3 }
             ) {
-                Column(
-                    modifier = Modifier
-                        .padding(24.dp)
-                        .fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                // Ticket card
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(24.dp),
+                    elevation = CardDefaults.cardElevation(8.dp),
+                    colors = CardDefaults.cardColors(containerColor = KisanWhite)
                 ) {
-                    // Emblem Header
-                    Box(
-                        modifier = Modifier
-                            .size(52.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(KisanMintContainer),
-                        contentAlignment = Alignment.Center
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text("🇮🇳", fontSize = 28.sp)
-                    }
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    Text(
-                        text = "GOVERNMENT OF KARNATAKA",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = KisanGreenDark,
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = 1.sp
-                    )
-
-                    Text(
-                        text = "Smart APMC Procurement Entry Pass",
-                        fontSize = 14.sp,
-                        color = KisanTextMuted,
-                        fontWeight = FontWeight.SemiBold
-                    )
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    // QR Frame
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(KisanWhite)
-                            .border(2.dp, KisanBorder, RoundedCornerShape(16.dp))
-                            .padding(16.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        qrBitmap?.let {
-                            Image(
-                                bitmap = it.asImageBitmap(),
-                                contentDescription = "Booking QR Code",
-                                modifier = Modifier.size(220.dp)
-                            )
-                        } ?: Box(
-                            modifier = Modifier.size(220.dp),
+                        // Header band — green
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(KisanGreenDark)
+                                .padding(16.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            CircularProgressIndicator(color = KisanGreenPrimary)
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = "GOVERNMENT OF KARNATAKA",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = KisanWhite.copy(alpha = 0.75f),
+                                    letterSpacing = 1.5.sp
+                                )
+                                Text(
+                                    text = "KisanProcure Digital Pass",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = KisanWhite
+                                )
+                            }
                         }
-                    }
 
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    // Token Badge
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = KisanMintContainer
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                        // Ticket perforation effect
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(
-                                text = "TOKEN NUMBER",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = KisanTextMuted,
-                                letterSpacing = 1.sp
+                            Box(
+                                modifier = Modifier
+                                    .size(16.dp)
+                                    .offset(x = (-8).dp)
+                                    .clip(androidx.compose.foundation.shape.CircleShape)
+                                    .background(KisanSurfaceLight)
                             )
-                            Spacer(Modifier.height(2.dp))
-                            Text(
-                                text = token,
-                                fontSize = 22.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = KisanGreenDark
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(1.dp)
+                                    .background(KisanDivider)
+                                    .align(Alignment.CenterVertically)
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .size(16.dp)
+                                    .offset(x = 8.dp)
+                                    .clip(androidx.compose.foundation.shape.CircleShape)
+                                    .background(KisanSurfaceLight)
                             )
                         }
-                    }
 
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Divider(color = KisanBorder, thickness = 0.5.dp)
-                    Spacer(modifier = Modifier.height(14.dp))
+                        Spacer(Modifier.height(16.dp))
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.Top
-                    ) {
-                        Icon(
-                            Icons.Default.CheckCircle,
-                            contentDescription = null,
-                            tint = KisanGreenPrimary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        // Token number — prominent
                         Text(
-                            text = "Show this QR code at the security gate or weighing bridge. Once scanned, your turn will be called on the live announcement board.",
-                            style = MaterialTheme.typography.bodySmall,
+                            text = "TOKEN",
+                            style = MaterialTheme.typography.labelSmall,
                             color = KisanTextMuted,
-                            lineHeight = 18.sp
+                            letterSpacing = 2.sp
                         )
+                        Text(
+                            text = token,
+                            style = MaterialTheme.typography.displaySmall,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = KisanGreenDark
+                        )
+
+                        Spacer(Modifier.height(20.dp))
+
+                        // QR Code
+                        Box(
+                            modifier = Modifier
+                                .size(220.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .border(2.dp, KisanBorder, RoundedCornerShape(16.dp))
+                                .background(KisanWhite)
+                                .padding(12.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            qrBitmap?.let {
+                                Image(
+                                    bitmap = it.asImageBitmap(),
+                                    contentDescription = "QR Code for $token",
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            } ?: CircularProgressIndicator(color = KisanGreenPrimary)
+                        }
+
+                        Spacer(Modifier.height(16.dp))
+
+                        // Status chip
+                        Surface(
+                            shape = RoundedCornerShape(20.dp),
+                            color = KisanStatusOpenBg
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(8.dp)
+                                        .clip(androidx.compose.foundation.shape.CircleShape)
+                                        .background(KisanStatusOpen)
+                                )
+                                Spacer(Modifier.width(6.dp))
+                                Text(
+                                    text = "VALID",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = KisanStatusOpen,
+                                    fontWeight = FontWeight.ExtraBold
+                                )
+                            }
+                        }
+
+                        Spacer(Modifier.height(20.dp))
+                        HorizontalDivider(color = KisanDivider, thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 16.dp))
+                        Spacer(Modifier.height(16.dp))
+
+                        // Instructions
+                        Row(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Icon(Icons.Default.Info, contentDescription = null, tint = KisanTextMuted, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = "Show this QR code at the security gate or weighing bridge. Your token will be announced at the operator counter.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = KisanTextMuted,
+                                lineHeight = 18.sp
+                            )
+                        }
+
+                        Spacer(Modifier.height(20.dp))
                     }
                 }
             }
@@ -188,22 +218,16 @@ fun QrPassScreen(
     }
 }
 
-private fun generateQrBitmap(content: String, size: Int): Bitmap? {
+private fun generateQrBitmapGreen(content: String, size: Int): Bitmap? {
     return try {
         val writer = QRCodeWriter()
         val bitMatrix = writer.encode(content, BarcodeFormat.QR_CODE, size, size)
         val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.RGB_565)
         for (x in 0 until size) {
             for (y in 0 until size) {
-                bitmap.setPixel(
-                    x,
-                    y,
-                    if (bitMatrix[x, y]) 0xFF1B5E20.toInt() else android.graphics.Color.WHITE
-                )
+                bitmap.setPixel(x, y, if (bitMatrix[x, y]) 0xFF1B5E20.toInt() else android.graphics.Color.WHITE)
             }
         }
         bitmap
-    } catch (e: Exception) {
-        null
-    }
+    } catch (e: Exception) { null }
 }

@@ -1,9 +1,12 @@
 package com.kisanprocure.app.ui.screens.operator
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -13,12 +16,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kisanprocure.app.data.model.QueueEntry
+import com.kisanprocure.app.ui.components.*
 import com.kisanprocure.app.ui.theme.*
 import com.kisanprocure.app.ui.viewmodel.QueueViewModel
 
@@ -30,6 +35,9 @@ fun OperatorDashboardScreen(
     onBack: () -> Unit
 ) {
     var checkInToken by remember { mutableStateOf("") }
+    var showManualInput by remember { mutableStateOf(false) }
+    var selectedTab by remember { mutableStateOf("Queue") }
+
     val liveQueue by queueViewModel.liveQueue.collectAsState()
     val isLoading by queueViewModel.isLoading.collectAsState()
     val checkInSuccess by queueViewModel.checkInSuccess.collectAsState()
@@ -39,14 +47,32 @@ fun OperatorDashboardScreen(
         queueViewModel.loadLiveQueue(centreId)
     }
 
+    // Determine the next token to call
+    val nextWaitingEntry = liveQueue?.queueEntries?.firstOrNull { it.status == "WAITING" }
+    val currentlyCalledEntry = liveQueue?.queueEntries?.firstOrNull { it.status == "CALLED" }
+    val displayNextToken = currentlyCalledEntry?.tokenNumber ?: nextWaitingEntry?.tokenNumber ?: "#104"
+
     Scaffold(
         containerColor = KisanSurfaceLight,
         topBar = {
             TopAppBar(
                 title = {
                     Column {
-                        Text("Operator Control Station", fontWeight = FontWeight.Bold, fontSize = 17.sp, color = KisanGreenDark)
-                        Text("Centre ID #$centreId • Counter 1", fontSize = 11.sp, color = KisanTextMuted)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                "Operator Control Station",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 17.sp,
+                                color = KisanGreenDark
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            KisanConnectionChip(isConnected = true)
+                        }
+                        Text(
+                            "Centre #$centreId • Counter 1 • Ravi Kumar (Operator)",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = KisanTextMuted
+                        )
                     }
                 },
                 navigationIcon = {
@@ -61,6 +87,35 @@ fun OperatorDashboardScreen(
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = KisanWhite)
             )
+        },
+        bottomBar = {
+            NavigationBar(
+                containerColor = KisanWhite,
+                contentColor = KisanGreenPrimary,
+                tonalElevation = 0.dp
+            ) {
+                listOf(
+                    Triple("Queue", Icons.Default.People, "Queue"),
+                    Triple("Weighment", Icons.Default.Scale, "Weighment"),
+                    Triple("Quality", Icons.Default.Verified, "Quality"),
+                    Triple("Payments", Icons.Default.CurrencyRupee, "Payments")
+                ).forEach { (label, icon, route) ->
+                    val isSelected = selectedTab == route
+                    NavigationBarItem(
+                        selected = isSelected,
+                        onClick = { selectedTab = route },
+                        icon = { Icon(icon, contentDescription = label, modifier = Modifier.size(20.dp)) },
+                        label = { Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = KisanGreenPrimary,
+                            selectedTextColor = KisanGreenPrimary,
+                            indicatorColor = KisanMintContainer,
+                            unselectedIconColor = KisanTextMuted,
+                            unselectedTextColor = KisanTextMuted
+                        )
+                    )
+                }
+            }
         }
     ) { padding ->
         Column(
@@ -70,66 +125,162 @@ fun OperatorDashboardScreen(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // Check-in card
+            // Hero Next Token Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = KisanWhite),
-                elevation = CardDefaults.cardElevation(2.dp)
+                shape = RoundedCornerShape(20.dp),
+                elevation = CardDefaults.cardElevation(3.dp),
+                colors = CardDefaults.cardColors(containerColor = KisanWhite)
             ) {
-                Column(modifier = Modifier.padding(18.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(KisanMintContainer),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(Icons.Default.QrCodeScanner, contentDescription = null, tint = KisanGreenPrimary, modifier = Modifier.size(20.dp))
-                        }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text("Farmer Token Check-In", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = KisanGreenDark)
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            Brush.horizontalGradient(listOf(KisanGreenDark, KisanGreenPrimary))
+                        )
+                        .padding(18.dp)
+                ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        OutlinedTextField(
-                            value = checkInToken,
-                            onValueChange = { checkInToken = it },
-                            placeholder = { Text("e.g. TOK-APMC-001") },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = KisanGreenPrimary,
-                                unfocusedBorderColor = KisanBorder,
-                                focusedLabelColor = KisanGreenPrimary
-                            ),
-                            shape = RoundedCornerShape(10.dp)
-                        )
-                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                "NEXT TOKEN",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = KisanWhite.copy(alpha = 0.75f),
+                                letterSpacing = 1.sp
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                text = displayNextToken,
+                                style = MaterialTheme.typography.displaySmall,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = KisanWhite
+                            )
+                        }
+
                         Button(
-                            onClick = {
-                                if (checkInToken.isNotBlank()) {
-                                    queueViewModel.checkIn(checkInToken.trim())
-                                    checkInToken = ""
-                                }
-                            },
-                            enabled = checkInToken.isNotBlank() && !isLoading,
-                            shape = RoundedCornerShape(10.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = KisanGreenPrimary)
+                            onClick = { queueViewModel.callNext(centreId, counterId = 1) },
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = KisanWhite,
+                                contentColor = KisanGreenDark
+                            ),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)
                         ) {
-                            Text("Check-In", fontWeight = FontWeight.Bold)
+                            Icon(Icons.Default.VolumeUp, contentDescription = null, tint = KisanGreenDark, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text("Call Token", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        }
+                    }
+                }
+            }
+
+            // Scan QR / Manual Token Check-In Section
+            KisanCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Scan QR Code",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = KisanGreenDark
+                        )
+                        TextButton(
+                            onClick = { showManualInput = !showManualInput },
+                            contentPadding = PaddingValues(0.dp)
+                        ) {
+                            Text(
+                                if (showManualInput) "Cancel" else "Enter Manually",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = KisanGreenPrimary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    if (!showManualInput) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .border(1.5.dp, KisanBorder, RoundedCornerShape(12.dp))
+                                .background(KisanSurfaceVariant)
+                                .clickable { showManualInput = true }
+                                .padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(KisanMintContainer),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(Icons.Default.QrCodeScanner, contentDescription = null, tint = KisanGreenPrimary, modifier = Modifier.size(20.dp))
+                                }
+                                Spacer(Modifier.width(12.dp))
+                                Column {
+                                    Text(
+                                        "Tap to scan or enter token manually",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = KisanTextDark
+                                    )
+                                    Text(
+                                        "Verify farmer digital pass on entry",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = KisanTextMuted
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        Spacer(Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            OutlinedTextField(
+                                value = checkInToken,
+                                onValueChange = { checkInToken = it },
+                                placeholder = { Text("e.g. TOK-APMC-001") },
+                                modifier = Modifier.weight(1f),
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = KisanGreenPrimary,
+                                    unfocusedBorderColor = KisanBorder,
+                                    focusedLabelColor = KisanGreenPrimary
+                                ),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            KisanPrimaryButton(
+                                text = "Check-In",
+                                onClick = {
+                                    if (checkInToken.isNotBlank()) {
+                                        queueViewModel.checkIn(checkInToken.trim())
+                                        checkInToken = ""
+                                        showManualInput = false
+                                    }
+                                },
+                                enabled = checkInToken.isNotBlank() && !isLoading,
+                                modifier = Modifier.height(52.dp)
+                            )
                         }
                     }
 
                     if (checkInSuccess != null) {
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(Modifier.height(8.dp))
                         Surface(
                             shape = RoundedCornerShape(8.dp),
                             color = KisanMintContainer,
@@ -144,7 +295,7 @@ fun OperatorDashboardScreen(
                                 Text(
                                     text = "Checked in: ${checkInSuccess!!.tokenNumber}",
                                     color = KisanGreenDark,
-                                    fontSize = 12.sp,
+                                    style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.SemiBold
                                 )
                             }
@@ -152,10 +303,10 @@ fun OperatorDashboardScreen(
                     }
 
                     if (errorMessage != null) {
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(Modifier.height(8.dp))
                         Surface(
                             shape = RoundedCornerShape(8.dp),
-                            color = Color(0xFFFFEBEE),
+                            color = KisanErrorBg,
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(
@@ -167,7 +318,7 @@ fun OperatorDashboardScreen(
                                 Text(
                                     text = errorMessage!!,
                                     color = KisanError,
-                                    fontSize = 12.sp
+                                    style = MaterialTheme.typography.labelSmall
                                 )
                             }
                         }
@@ -175,49 +326,45 @@ fun OperatorDashboardScreen(
                 }
             }
 
-            // Quick Call Next Action Button
-            Button(
-                onClick = { queueViewModel.callNext(centreId, counterId = 1) },
-                shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = KisanGreenPrimary),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp)
-            ) {
-                Icon(Icons.Default.VolumeUp, contentDescription = null, tint = KisanWhite)
-                Spacer(Modifier.width(8.dp))
-                Text("📢 Call Next Token (Counter 1)", fontSize = 15.sp, fontWeight = FontWeight.Bold)
-            }
-
+            // Current Queue Roster Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Current Station Queue", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = KisanTextDark)
-                liveQueue?.queueEntries?.size?.let {
-                    Text("$it tokens", fontSize = 12.sp, color = KisanTextMuted)
+                Text(
+                    "Current Queue",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = KisanTextDark
+                )
+                liveQueue?.queueEntries?.size?.let { count ->
+                    Text(
+                        "$count tokens",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = KisanTextMuted
+                    )
                 }
             }
 
+            // Queue list
             if (isLoading && liveQueue == null) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = KisanGreenPrimary)
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    repeat(3) { KisanCardSkeleton() }
                 }
             } else if (liveQueue?.queueEntries.isNullOrEmpty()) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = CardDefaults.cardColors(containerColor = KisanWhite)
-                ) {
-                    Box(modifier = Modifier.padding(32.dp).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        Text("No tokens waiting at this station", color = KisanTextMuted)
+                KisanCard(modifier = Modifier.fillMaxWidth()) {
+                    Box(modifier = Modifier.padding(28.dp).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        Text("No tokens in queue at this station", style = MaterialTheme.typography.bodyMedium, color = KisanTextMuted)
                     }
                 }
             } else {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
                     items(liveQueue?.queueEntries ?: emptyList()) { entry ->
-                        OperatorQueueCard(
+                        OperatorQueueRow(
                             entry = entry,
                             onStatusChange = { newStatus ->
                                 queueViewModel.updateStatus(entry.id, newStatus)
@@ -231,67 +378,81 @@ fun OperatorDashboardScreen(
 }
 
 @Composable
-fun OperatorQueueCard(
+fun OperatorQueueRow(
     entry: QueueEntry,
     onStatusChange: (String) -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = KisanWhite),
-        elevation = CardDefaults.cardElevation(1.5.dp)
-    ) {
+    KisanCard(modifier = Modifier.fillMaxWidth(), elevation = 1.dp) {
         Row(
-            modifier = Modifier.padding(14.dp).fillMaxWidth(),
+            modifier = Modifier
+                .padding(12.dp)
+                .fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                 Box(
                     modifier = Modifier
-                        .size(38.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(KisanMintContainer),
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(
+                            when (entry.status) {
+                                "CALLED" -> KisanStatusCalledBg
+                                "PROCESSING" -> KisanStatusProcessingBg
+                                "COMPLETED" -> KisanMintContainer
+                                else -> KisanSurfaceVariant
+                            }
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("#${entry.queuePosition}", fontWeight = FontWeight.ExtraBold, color = KisanGreenDark, fontSize = 14.sp)
-                }
-                Spacer(Modifier.width(12.dp))
-                Column {
-                    Text(entry.tokenNumber, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = KisanTextDark)
-                    Text("${entry.farmerName ?: "Farmer"} • ${entry.cropName ?: ""}", style = MaterialTheme.typography.bodySmall, color = KisanTextMuted)
                     Text(
-                        "Status: ${entry.status}",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
+                        "#${entry.queuePosition}",
+                        fontWeight = FontWeight.ExtraBold,
                         color = when (entry.status) {
-                            "CALLED" -> KisanError
-                            "PROCESSING" -> KisanGreenDark
-                            else -> KisanAmber
-                        }
+                            "CALLED" -> KisanStatusCalled
+                            "PROCESSING" -> KisanStatusProcessing
+                            "COMPLETED" -> KisanGreenDark
+                            else -> KisanTextMuted
+                        },
+                        fontSize = 13.sp
+                    )
+                }
+                Spacer(Modifier.width(10.dp))
+                Column {
+                    Text(
+                        entry.tokenNumber,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = KisanTextDark
+                    )
+                    Text(
+                        "${entry.farmerName ?: "Farmer"} • ${entry.cropName ?: "Produce"}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = KisanTextMuted
                     )
                 }
             }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                KisanStatusBadge(status = entry.status)
+
                 if (entry.status == "CALLED") {
                     Button(
                         onClick = { onStatusChange("PROCESSING") },
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = KisanGreenPrimary),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
                     ) {
-                        Text("Process", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text("Process", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
-                }
-                if (entry.status == "PROCESSING") {
+                } else if (entry.status == "PROCESSING") {
                     Button(
                         onClick = { onStatusChange("COMPLETED") },
                         shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0)),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                        colors = ButtonDefaults.buttonColors(containerColor = KisanBlue),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
                     ) {
-                        Text("Complete", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text("Complete", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
