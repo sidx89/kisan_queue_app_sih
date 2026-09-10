@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">KisanProcure</string>
+    <string name="notification_channel_name">Queue Notifications</string>
+    <string name="notification_channel_desc">Real-time updates about your queue position and procurement status</string>
+</resources>
