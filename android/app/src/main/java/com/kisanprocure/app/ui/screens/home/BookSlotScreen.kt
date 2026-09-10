@@ -58,7 +58,7 @@ fun BookSlotScreen(
 
     LaunchedEffect(bookingSuccess) {
         bookingSuccess?.let {
-            onBookingSuccess(it.bookingToken)
+            onBookingSuccess(it.displayToken)
             bookingViewModel.clearBookingSuccess()
         }
     }
@@ -226,8 +226,11 @@ private fun StepCentre(
                         Spacer(Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(centre.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = if (isSelected) KisanGreenDark else KisanTextDark)
-                            Text("${centre.location}, ${centre.district}", style = MaterialTheme.typography.bodySmall, color = KisanTextMuted)
-                            Text(centre.operatingHours, style = MaterialTheme.typography.labelSmall, color = KisanTextHint)
+                            val locStr = listOfNotNull(centre.displayLocation.takeIf { it.isNotBlank() }, centre.district?.takeIf { it.isNotBlank() && it != centre.displayLocation }).joinToString(", ")
+                            if (locStr.isNotBlank()) {
+                                Text(locStr, style = MaterialTheme.typography.bodySmall, color = KisanTextMuted)
+                            }
+                            Text(centre.displayOperatingHours, style = MaterialTheme.typography.labelSmall, color = KisanTextHint)
                         }
                         if (isSelected) {
                             Icon(Icons.Default.CheckCircle, contentDescription = null, tint = KisanGreenPrimary, modifier = Modifier.size(22.dp))

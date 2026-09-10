@@ -150,8 +150,14 @@ export async function getFarmerBookings(req: Request, res: Response, next: NextF
 
     const formatted = bookings.map((b: any) => ({
       ...b,
-      booking_token: b.booking_ref,
-      bookingToken: b.booking_ref,
+      booking_token: b.booking_ref || `BK-${b.id}`,
+      bookingToken: b.booking_ref || `BK-${b.id}`,
+      slot_date: b.booking_date instanceof Date ? b.booking_date.toISOString().split('T')[0] : String(b.booking_date || ''),
+      slotDate: b.booking_date instanceof Date ? b.booking_date.toISOString().split('T')[0] : String(b.booking_date || ''),
+      slot_time: b.start_time && b.end_time ? `${b.start_time} - ${b.end_time}` : (b.start_time || '09:00 - 11:00'),
+      slotTime: b.start_time && b.end_time ? `${b.start_time} - ${b.end_time}` : (b.start_time || '09:00 - 11:00'),
+      estimated_quantity_kg: b.estimated_quantity || b.estimated_quantity_kg || 100,
+      estimatedQuantityKg: b.estimated_quantity || b.estimated_quantity_kg || 100,
     }));
 
     return res.json({ success: true, bookings: formatted, data: formatted, requestId: req.requestId });

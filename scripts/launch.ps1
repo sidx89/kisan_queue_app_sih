@@ -139,6 +139,15 @@ if ((Test-Path $CF) -and $bok) {
         }
         $statusObj | ConvertTo-Json | Set-Content $STATUSFILE -Encoding UTF8
         Write-Ok 'Tunnel URL detected' $true $turl
+
+        # Automatically sync detected tunnel URL with Android AppConfig
+        $appConfigPath = Join-Path $ROOT 'android\app\src\main\java\com\kisanprocure\app\utils\AppConfig.kt'
+        if (Test-Path $appConfigPath) {
+            $cfg = Get-Content $appConfigPath -Raw
+            $cfg = $cfg -replace 'const val LIVE_CLOUDFLARE_URL = ".*?"', ('const val LIVE_CLOUDFLARE_URL = "' + $turl + '"')
+            Set-Content $appConfigPath $cfg -Encoding UTF8
+            Write-Ok 'Android AppConfig' $true ('Synced live URL -> ' + $turl)
+        }
         Write-Host '  Testing public HTTPS /health (12s propagation)...' -ForegroundColor Gray
         Start-Sleep 12
         $tOk = Hget ($turl + '/health')

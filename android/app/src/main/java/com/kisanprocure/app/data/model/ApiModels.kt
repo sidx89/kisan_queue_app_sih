@@ -42,17 +42,36 @@ data class UserProfile(
 
 data class ProcurementCentre(
     val id: Int,
-    val name: String,
-    val location: String,
-    val district: String,
-    val state: String,
-    val capacity: Int,
-    @SerializedName("operating_hours") val operatingHours: String,
-    @SerializedName("is_active") val isActive: Boolean,
+    val name: String = "",
+    val address: String? = null,
+    val village: String? = null,
+    val location: String? = null,
+    val district: String? = null,
+    val state: String? = null,
+    @SerializedName("daily_capacity") val dailyCapacity: Int? = null,
+    val capacity: Int? = null,
+    @SerializedName("open_time") val openTime: String? = null,
+    @SerializedName("close_time") val closeTime: String? = null,
+    @SerializedName("operating_hours") val operatingHours: String? = null,
+    val status: String? = "OPEN",
+    @SerializedName("is_active") val isActive: Boolean? = null,
     @SerializedName("waiting_count") val waitingCount: Int? = null,
     @SerializedName("processing_count") val processingCount: Int? = null,
+    @SerializedName("current_queue") val currentQueue: Int? = null,
     @SerializedName("total_queue") val totalQueue: Int? = null
-)
+) {
+    val displayCapacity: Int
+        get() = dailyCapacity ?: capacity ?: 150
+
+    val displayStatus: String
+        get() = status ?: if (isActive == false) "CLOSED" else "OPEN"
+
+    val displayLocation: String
+        get() = village?.takeIf { it.isNotBlank() } ?: location?.takeIf { it.isNotBlank() } ?: address?.takeIf { it.isNotBlank() } ?: district ?: ""
+
+    val displayOperatingHours: String
+        get() = operatingHours?.takeIf { it.isNotBlank() } ?: if (!openTime.isNullOrBlank() && !closeTime.isNullOrBlank()) "$openTime - $closeTime" else "08:30 - 17:30"
+}
 
 // ─── Slots ─────────────────────────────────────────────────────────────────────
 
@@ -78,17 +97,39 @@ data class CreateBookingRequest(
 )
 
 data class Booking(
-    val id: Int,
-    @SerializedName("booking_token") val bookingToken: String,
+    val id: Int = 0,
+    @SerializedName("booking_token") val bookingToken: String? = null,
+    @SerializedName("booking_ref") val bookingRef: String? = null,
     @SerializedName("qr_code") val qrCode: String? = null,
-    val status: String,
+    val status: String? = "WAITING",
     @SerializedName("centre_name") val centreName: String? = null,
     @SerializedName("slot_date") val slotDate: String? = null,
+    @SerializedName("booking_date") val bookingDate: String? = null,
     @SerializedName("slot_time") val slotTime: String? = null,
+    @SerializedName("start_time") val startTime: String? = null,
     @SerializedName("crop_name") val cropName: String? = null,
     @SerializedName("estimated_quantity_kg") val estimatedQuantityKg: Double? = null,
+    @SerializedName("estimated_quantity") val estimatedQuantity: Double? = null,
     @SerializedName("created_at") val createdAt: String? = null
-)
+) {
+    val displayToken: String
+        get() = bookingToken?.takeIf { it.isNotBlank() } ?: bookingRef?.takeIf { it.isNotBlank() } ?: "TOK-$id"
+
+    val displayDate: String
+        get() = slotDate?.takeIf { it.isNotBlank() } ?: bookingDate ?: "Today"
+
+    val displayTime: String
+        get() = slotTime?.takeIf { it.isNotBlank() } ?: startTime ?: "09:00 - 11:00"
+
+    val displayStatus: String
+        get() = status ?: "WAITING"
+
+    val displayCrop: String
+        get() = cropName ?: "Produce"
+
+    val displayQuantity: String
+        get() = "${(estimatedQuantityKg ?: estimatedQuantity ?: 100.0).toInt()} kg"
+}
 
 // ─── Queue ─────────────────────────────────────────────────────────────────────
 

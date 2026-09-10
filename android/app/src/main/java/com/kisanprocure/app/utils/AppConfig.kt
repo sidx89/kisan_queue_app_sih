@@ -24,7 +24,7 @@ object AppConfig {
     }
 
     // Live Public Cloudflare Tunnel URL
-    const val LIVE_CLOUDFLARE_URL = "https://navigation-optics-composite-oriented.trycloudflare.com"
+    const val LIVE_CLOUDFLARE_URL = "https://artwork-configuring-amazing-supporting.trycloudflare.com"
     const val USB_LOCAL_URL = "http://127.0.0.1:5000"
 
     private lateinit var prefs: SharedPreferences
@@ -45,7 +45,8 @@ object AppConfig {
             saved.contains("your-tunnel") ||
             saved.contains("soldiers-blog-limit-intention") ||
             saved.contains("bigger-layer-show-seats") ||
-            saved.contains("allowing-month-msie-workplace")
+            saved.contains("allowing-month-msie-workplace") ||
+            saved.contains("navigation-optics-composite-oriented")
         ) {
             prefs.edit().putString(KEY_API_URL, LIVE_CLOUDFLARE_URL).apply()
             LIVE_CLOUDFLARE_URL

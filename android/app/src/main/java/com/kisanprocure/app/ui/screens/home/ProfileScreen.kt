@@ -20,6 +20,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.content.Context
+import android.content.Intent
+import android.widget.Toast
+import androidx.core.content.FileProvider
+import java.io.File
 import com.kisanprocure.app.ui.components.*
 import com.kisanprocure.app.ui.theme.*
 import com.kisanprocure.app.ui.viewmodel.AuthViewModel
@@ -289,6 +294,36 @@ fun ProfileScreen(
 
                     HorizontalDivider(color = KisanDivider, thickness = 0.5.dp)
 
+                    // Share APK Row (WhatsApp / Direct file)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { shareApk(context) }
+                            .padding(vertical = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(KisanMintContainer),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Default.Share, contentDescription = null, tint = KisanGreenPrimary, modifier = Modifier.size(18.dp))
+                            }
+                            Spacer(Modifier.width(12.dp))
+                            Column {
+                                Text("Share App (WhatsApp / APK)", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = KisanGreenDark)
+                                Text("Send APK directly to other farmers", style = MaterialTheme.typography.labelSmall, color = KisanTextMuted)
+                            }
+                        }
+                        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = KisanGreenPrimary)
+                    }
+
+                    HorizontalDivider(color = KisanDivider, thickness = 0.5.dp)
+
                     // About App
                     Row(
                         modifier = Modifier
@@ -438,5 +473,43 @@ fun SettingsMenuRow(
             }
             Icon(Icons.Default.ChevronRight, contentDescription = null, tint = KisanTextMuted)
         }
+    }
+}
+
+fun shareApk(context: Context) {
+    try {
+        val originalApk = File(context.applicationInfo.sourceDir)
+        if (!originalApk.exists()) {
+            Toast.makeText(context, "APK not found on device", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val cacheApk = File(context.cacheDir, "KisanProcure.apk")
+        originalApk.inputStream().use { input ->
+            cacheApk.outputStream().use { output ->
+                input.copyTo(output)
+            }
+        }
+
+        val uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            cacheApk
+        )
+
+        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "application/vnd.android.package-archive"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            putExtra(Intent.EXTRA_SUBJECT, "KisanProcure App")
+            putExtra(
+                Intent.EXTRA_TEXT,
+                "Download & install KisanProcure - Smart Farmer Procurement App to book APMC slots & track queues live."
+            )
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+
+        context.startActivity(Intent.createChooser(shareIntent, "Share KisanProcure APK via"))
+    } catch (e: Exception) {
+        Toast.makeText(context, "Failed to share APK: ${e.message}", Toast.LENGTH_LONG).show()
     }
 }

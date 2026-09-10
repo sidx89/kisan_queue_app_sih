@@ -52,7 +52,7 @@ fun HomeScreen(
     var showLanguageMenu by remember { mutableStateOf(false) }
 
     val firstName = currentUser?.name?.substringBefore(" ") ?: "Kisan"
-    val activeBooking = myBookings.firstOrNull { it.status in listOf("CONFIRMED", "CHECKED_IN") }
+    val activeBooking = myBookings.firstOrNull { it.displayStatus in listOf("CONFIRMED", "CHECKED_IN", "WAITING") }
 
     Scaffold(
         containerColor = KisanSurfaceLight,
@@ -132,7 +132,7 @@ fun HomeScreen(
                     item {
                         ActiveBookingHeroCard(
                             booking = activeBooking,
-                            onViewQr = { onNavigateToQrPass(activeBooking.bookingToken) },
+                            onViewQr = { onNavigateToQrPass(activeBooking.displayToken) },
                             onViewQueue = { centres.firstOrNull()?.id?.let { onNavigateToLiveQueue(it) } }
                         )
                     }
@@ -184,7 +184,7 @@ fun HomeScreen(
                         if (booking != activeBooking) { // active booking already shown in hero
                             BookingListCard(
                                 booking = booking,
-                                onViewQr = { onNavigateToQrPass(booking.bookingToken) },
+                                onViewQr = { onNavigateToQrPass(booking.displayToken) },
                                 onViewQueue = { centres.firstOrNull()?.id?.let { onNavigateToLiveQueue(it) } }
                             )
                         }
@@ -242,13 +242,13 @@ fun ActiveBookingHeroCard(
                         letterSpacing = 1.sp
                     )
                     Text(
-                        text = booking.bookingToken,
+                        text = booking.displayToken,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.ExtraBold,
                         color = KisanWhite
                     )
                 }
-                KisanStatusBadge(status = booking.status)
+                KisanStatusBadge(status = booking.displayStatus)
             }
         }
 
@@ -269,7 +269,7 @@ fun ActiveBookingHeroCard(
                 Icon(Icons.Default.Schedule, contentDescription = null, tint = KisanTextMuted, modifier = Modifier.size(14.dp))
                 Spacer(Modifier.width(6.dp))
                 Text(
-                    text = "${booking.slotDate ?: "Today"} • ${booking.slotTime ?: ""}",
+                    text = "${booking.displayDate} • ${booking.displayTime}",
                     style = MaterialTheme.typography.bodySmall,
                     color = KisanTextMuted
                 )
@@ -277,7 +277,7 @@ fun ActiveBookingHeroCard(
             Spacer(Modifier.height(12.dp))
 
             // Progress timeline
-            BookingTimeline(status = booking.status)
+            BookingTimeline(status = booking.displayStatus)
 
             Spacer(Modifier.height(16.dp))
 
@@ -401,21 +401,21 @@ fun BookingListCard(
             }
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(booking.bookingToken, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = KisanGreenDark)
+                Text(booking.displayToken, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = KisanGreenDark)
                 Text(
-                    text = "${booking.centreName ?: "Centre"} • ${booking.slotDate ?: ""}",
+                    text = "${booking.centreName ?: "Centre"} • ${booking.displayDate}",
                     style = MaterialTheme.typography.bodySmall,
                     color = KisanTextMuted,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = "${booking.cropName ?: ""} • ${booking.estimatedQuantityKg ?: 0} kg",
+                    text = "${booking.displayCrop} • ${booking.displayQuantity}",
                     style = MaterialTheme.typography.bodySmall,
                     color = KisanTextMuted
                 )
             }
-            KisanStatusBadge(status = booking.status)
+            KisanStatusBadge(status = booking.displayStatus)
         }
     }
 }
@@ -429,7 +429,7 @@ fun ProcurementCentreCard(
     centre: ProcurementCentre,
     onClick: () -> Unit
 ) {
-    val statusLabel = if (centre.isActive) "OPEN" else "CLOSED"
+    val statusLabel = centre.displayStatus
 
     KisanCard(modifier = Modifier.fillMaxWidth(), onClick = onClick, elevation = 2.dp) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -461,10 +461,10 @@ fun ProcurementCentreCard(
                     Text(
                         text = buildString {
                             val parts = listOfNotNull(
-                                centre.location.takeIf { it.isNotBlank() },
-                                centre.district.takeIf { it.isNotBlank() }
+                                centre.displayLocation.takeIf { it.isNotBlank() },
+                                centre.district?.takeIf { it.isNotBlank() && it != centre.displayLocation }
                             )
-                            append(parts.joinToString(", "))
+                            append(if (parts.isNotEmpty()) parts.joinToString(", ") else "Karnataka APMC")
                         },
                         style = MaterialTheme.typography.bodySmall,
                         color = KisanTextMuted,
@@ -486,7 +486,7 @@ fun ProcurementCentreCard(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 CentreMetric(
-                    value = "${centre.waitingCount ?: 0}",
+                    value = "${centre.waitingCount ?: centre.currentQueue ?: 0}",
                     label = "Waiting",
                     valueColor = KisanAmber
                 )
@@ -498,15 +498,13 @@ fun ProcurementCentreCard(
                 )
                 VerticalDivider(modifier = Modifier.height(32.dp), color = KisanDivider)
                 CentreMetric(
-                    value = "${centre.capacity}",
+                    value = "${centre.displayCapacity}",
                     label = "Capacity",
                     valueColor = KisanGreenPrimary
                 )
                 VerticalDivider(modifier = Modifier.height(32.dp), color = KisanDivider)
                 CentreMetric(
-                    value = centre.operatingHours.let {
-                        it.substringBefore(" - ").substringBefore(":").trim()
-                    },
+                    value = centre.displayOperatingHours.substringBefore(" - ").substringBefore(":").trim().let { if (it.isNotBlank()) "$it:00" else "08:30" },
                     label = "Opens",
                     valueColor = KisanTextSecondary
                 )

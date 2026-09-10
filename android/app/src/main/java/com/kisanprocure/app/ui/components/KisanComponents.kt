@@ -178,7 +178,7 @@ fun KisanOutlineButton(
 
 data class StatusStyle(val textColor: Color, val bgColor: Color)
 
-fun getStatusStyle(status: String): StatusStyle = when (status.uppercase()) {
+fun getStatusStyle(status: String?): StatusStyle = when (status?.uppercase() ?: "") {
     "OPEN"        -> StatusStyle(KisanStatusOpen, KisanStatusOpenBg)
     "BUSY"        -> StatusStyle(KisanStatusBusy, KisanStatusBusyBg)
     "CLOSED"      -> StatusStyle(KisanStatusClosed, KisanStatusClosedBg)
@@ -195,17 +195,18 @@ fun getStatusStyle(status: String): StatusStyle = when (status.uppercase()) {
 
 @Composable
 fun KisanStatusBadge(
-    status: String,
+    status: String?,
     modifier: Modifier = Modifier
 ) {
-    val style = getStatusStyle(status)
+    val safeStatus = status?.ifBlank { null } ?: "WAITING"
+    val style = getStatusStyle(safeStatus)
     Surface(
         shape = RoundedCornerShape(20.dp),
         color = style.bgColor,
         modifier = modifier
     ) {
         Text(
-            text = status,
+            text = safeStatus,
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
             style = MaterialTheme.typography.labelSmall,
             color = style.textColor,
@@ -249,6 +250,7 @@ fun KisanMetricCard(
 // KISAN CARD (standard elevated card)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun KisanCard(
     modifier: Modifier = Modifier,
@@ -256,13 +258,24 @@ fun KisanCard(
     onClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Card(
-        modifier = if (onClick != null) modifier.clickable(onClick = onClick) else modifier,
-        shape = MaterialTheme.shapes.large,
-        elevation = CardDefaults.cardElevation(defaultElevation = elevation),
-        colors = CardDefaults.cardColors(containerColor = KisanWhite),
-        content = content
-    )
+    if (onClick != null) {
+        Card(
+            onClick = onClick,
+            modifier = modifier,
+            shape = MaterialTheme.shapes.large,
+            elevation = CardDefaults.cardElevation(defaultElevation = elevation),
+            colors = CardDefaults.cardColors(containerColor = KisanWhite),
+            content = content
+        )
+    } else {
+        Card(
+            modifier = modifier,
+            shape = MaterialTheme.shapes.large,
+            elevation = CardDefaults.cardElevation(defaultElevation = elevation),
+            colors = CardDefaults.cardColors(containerColor = KisanWhite),
+            content = content
+        )
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
