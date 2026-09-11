@@ -200,18 +200,26 @@ if ($turl) {
 }
 
 # ---- Write Report ----
+$tunnelStatus = if ($null -ne $turl) { 'RUNNING: ' + $turl } else { 'NOT RUNNING' }
+$mysqlStatus  = if (Port-Up 3306)    { 'PASS' } else { 'FAIL' }
+$backStatus   = if ($bok)            { 'PASS' } else { 'FAIL' }
+$adminStatus  = if (Port-Up $AP)     { 'PASS' } else { 'FAIL' }
+$socketStatus = if ($sok)            { 'PASS' } else { 'FAIL' }
+$publicStatus = if ($tOk)            { 'PASS' } else { 'FAIL' }
+$publicUrl    = if ($turl)           { $turl }  else { 'N/A' }
+
 $lines = @(
     'KISANPROCURE CONNECTION REPORT'
     '================================'
     ('Generated : ' + (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'))
-    ('MySQL     : ' + (if (Port-Up 3306) { 'PASS' } else { 'FAIL' }))
-    ('Backend   : ' + (if ($bok)  { 'PASS' } else { 'FAIL' }))
-    ('Admin     : ' + (if (Port-Up $AP) { 'PASS' } else { 'FAIL' }))
-    ('Socket.IO : ' + (if ($sok)  { 'PASS' } else { 'FAIL' }))
-    ('Tunnel    : ' + (if ($null -ne $turl) { 'RUNNING: ' + $turl } else { 'NOT RUNNING' }))
-    ('PublicH   : ' + (if ($tOk)  { 'PASS' } else { 'FAIL' }))
+    ('MySQL     : ' + $mysqlStatus)
+    ('Backend   : ' + $backStatus)
+    ('Admin     : ' + $adminStatus)
+    ('Socket.IO : ' + $socketStatus)
+    ('Tunnel    : ' + $tunnelStatus)
+    ('PublicH   : ' + $publicStatus)
     ('Local URL : http://127.0.0.1:5000')
-    ('Public URL: ' + (if ($turl) { $turl } else { 'N/A' }))
+    ('Public URL: ' + $publicUrl)
 )
 $lines | Set-Content $REPORT -Encoding UTF8
 Write-Host ''
