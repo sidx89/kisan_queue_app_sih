@@ -1,4 +1,4 @@
-package com.kisanprocure.app.utils
+﻿package com.kisanprocure.app.utils
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -23,11 +23,11 @@ object AppConfig {
         CUSTOM
     }
 
-    // Live Public Cloudflare Tunnel URL — updated each session by START_KISAN_SYSTEM.bat
-    const val LIVE_CLOUDFLARE_URL = "https://enhanced-explained-employment-fireplace.trycloudflare.com"
+    // Live Public Cloudflare Tunnel URL â€” updated each session by START_KISAN_SYSTEM.bat
+    const val LIVE_CLOUDFLARE_URL = "https://"
     const val USB_LOCAL_URL = "http://127.0.0.1:5000"
 
-    // All known stale / expired tunnel slugs — add new ones here when they expire
+    // All known stale / expired tunnel slugs â€” add new ones here when they expire
     private val STALE_TUNNEL_SLUGS = setOf(
         "artwork-configuring-amazing-supporting",
         "witnesses-adapted-teddy-scheme",
@@ -98,3 +98,5 @@ object AppConfig {
 
     fun getSocketUrl(): String = apiBaseUrl
 }
+
+

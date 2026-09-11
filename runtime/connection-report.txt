@@ -1,4 +1,11 @@
 ﻿KISANPROCURE CONNECTION REPORT
 ================================
-Generated : 2026-09-11 15:17:38
+Generated : 2026-09-11 15:32:29
+MySQL     : PASS
+Backend   : PASS
+Admin     : FAIL
+Socket.IO : PASS
+Tunnel    : RUNNING: https://
+PublicH   : FAIL
 Local URL : http://127.0.0.1:5000
+Public URL: https://

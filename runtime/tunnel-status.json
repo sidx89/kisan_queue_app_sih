@@ -1,6 +1,7 @@
-{
-  "running": true,
-  "url": "https://navigation-optics-composite-oriented.trycloudflare.com",
-  "localTarget": "http://127.0.0.1:5000",
-  "startedAt": "2026-09-10T21:40:46.074618"
+﻿{
+    "pid":  25316,
+    "url":  "https://",
+    "running":  true,
+    "startedAt":  "2026-09-11T15:32:06.8190682+05:30",
+    "localTarget":  "http://127.0.0.1:5000"
 }
