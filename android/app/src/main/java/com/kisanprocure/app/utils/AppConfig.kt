@@ -23,9 +23,20 @@ object AppConfig {
         CUSTOM
     }
 
-    // Live Public Cloudflare Tunnel URL
-    const val LIVE_CLOUDFLARE_URL = "https://artwork-configuring-amazing-supporting.trycloudflare.com"
+    // Live Public Cloudflare Tunnel URL — updated each session by START_KISAN_SYSTEM.bat
+    const val LIVE_CLOUDFLARE_URL = "https://witnesses-adapted-teddy-scheme.trycloudflare.com"
     const val USB_LOCAL_URL = "http://127.0.0.1:5000"
+
+    // All known stale / expired tunnel slugs — add new ones here when they expire
+    private val STALE_TUNNEL_SLUGS = setOf(
+        "artwork-configuring-amazing-supporting",
+        "soldiers-blog-limit-intention",
+        "bigger-layer-show-seats",
+        "allowing-month-msie-workplace",
+        "navigation-optics-composite-oriented",
+        "your-tunnel",
+        "192.168.1.100"
+    )
 
     private lateinit var prefs: SharedPreferences
 
@@ -35,23 +46,21 @@ object AppConfig {
     var environment: Environment = Environment.TUNNEL
         private set
 
+    private fun isStale(url: String?): Boolean {
+        if (url.isNullOrBlank()) return true
+        return STALE_TUNNEL_SLUGS.any { url.contains(it) }
+    }
+
     fun init(context: Context) {
         prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val saved = prefs.getString(KEY_API_URL, null)
 
-        // Upgrade any stale or expired quick tunnel URLs
-        apiBaseUrl = if (saved.isNullOrBlank() ||
-            saved.contains("192.168.1.100") ||
-            saved.contains("your-tunnel") ||
-            saved.contains("soldiers-blog-limit-intention") ||
-            saved.contains("bigger-layer-show-seats") ||
-            saved.contains("allowing-month-msie-workplace") ||
-            saved.contains("navigation-optics-composite-oriented")
-        ) {
+        // Replace any stale/expired tunnel URL with the current live one
+        apiBaseUrl = if (isStale(saved)) {
             prefs.edit().putString(KEY_API_URL, LIVE_CLOUDFLARE_URL).apply()
             LIVE_CLOUDFLARE_URL
         } else {
-            saved
+            saved!!
         }
 
         environment = try {
