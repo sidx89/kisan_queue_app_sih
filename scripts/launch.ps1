@@ -114,19 +114,31 @@ Write-Host ''; Write-Host '[5/6] Cloudflare Tunnel...' -ForegroundColor Yellow
 $turl = $null
 $tOk  = $false
 if ((Test-Path $CF) -and $bok) {
-    # Use cmd.exe to merge stdout+stderr into one log file (PS5 disallows same file for both)
-    $cfArgs = "/c `"$CF`" tunnel --url http://127.0.0.1:5000 > `"$CFLOG`" 2>&1"
-    $cfp = Start-Process 'cmd.exe' $cfArgs -WindowStyle Hidden -PassThru
+    # PS5: stdout and stderr must go to separate files
+    $cfLogOut = Join-Path $RUNTIME 'cloudflare-out.log'
+    $cfLogErr = Join-Path $RUNTIME 'cloudflare-err.log'
+    if (Test-Path $cfLogOut) { Remove-Item $cfLogOut -Force }
+    if (Test-Path $cfLogErr) { Remove-Item $cfLogErr -Force }
+    $cfp = Start-Process $CF 'tunnel --url http://127.0.0.1:5000' `
+        -RedirectStandardOutput $cfLogOut `
+        -RedirectStandardError  $cfLogErr `
+        -WindowStyle Hidden -PassThru
     Write-Host '  Waiting for URL (up to 30s)...' -ForegroundColor Gray
     for ($i=0; $i -lt 30; $i++) {
         Start-Sleep 1
-        if (Test-Path $CFLOG) {
-            $txt = Get-Content $CFLOG -Raw -ErrorAction SilentlyContinue
-            if ($txt -match 'https://([a-z0-9\-]+\.trycloudflare\.com)') {
-                $turl = 'https://' + $Matches[1]
-                break
+        # Cloudflare prints URL to stderr — check both files
+        foreach ($lf in @($cfLogOut, $cfLogErr)) {
+            if (Test-Path $lf) {
+                $txt = Get-Content $lf -Raw -ErrorAction SilentlyContinue
+                if ($txt -match 'https://([a-z0-9\-]+\.trycloudflare\.com)') {
+                    $turl = 'https://' + $Matches[1]
+                    # Merge into main CFLOG for AppConfig sync later
+                    $txt | Set-Content $CFLOG -Encoding UTF8
+                    break
+                }
             }
         }
+        if ($turl) { break }
     }
     if ($turl) {
         Set-Content $URLFILE $turl -Encoding UTF8
