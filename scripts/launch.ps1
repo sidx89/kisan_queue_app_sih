@@ -114,9 +114,9 @@ Write-Host ''; Write-Host '[5/6] Cloudflare Tunnel...' -ForegroundColor Yellow
 $turl = $null
 $tOk  = $false
 if ((Test-Path $CF) -and $bok) {
-    $cfp = Start-Process $CF 'tunnel --url http://127.0.0.1:5000' `
-        -RedirectStandardOutput $CFLOG -RedirectStandardError $CFLOG `
-        -WindowStyle Hidden -PassThru
+    # Use cmd.exe to merge stdout+stderr into one log file (PS5 disallows same file for both)
+    $cfArgs = "/c `"$CF`" tunnel --url http://127.0.0.1:5000 > `"$CFLOG`" 2>&1"
+    $cfp = Start-Process 'cmd.exe' $cfArgs -WindowStyle Hidden -PassThru
     Write-Host '  Waiting for URL (up to 30s)...' -ForegroundColor Gray
     for ($i=0; $i -lt 30; $i++) {
         Start-Sleep 1
